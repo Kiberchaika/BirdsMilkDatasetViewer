@@ -15,6 +15,9 @@
   let locks = { seeking: false, scrolling: false };
   let scrollListeners: {element: HTMLElement, handler: EventListener}[] = [];
   
+  // Add state for active marker tracking
+  let activeMarker: { trackIndex: number, start: number, end: number } | null = null;
+  
   const maxZoom = 500;
   const minZoom = 5;
   const defaultZoom = 20;
@@ -94,12 +97,18 @@
         }
       });
 
-      // Start the new track
-      startPosition = Math.max(...[
-        wavesurfer.getCurrentTime(), 
-        trackStates[index].position,
-        loadPosition(index)
-      ].filter(pos => pos > 0)) || 0;
+      // If we have an active marker, ensure we start from its start position
+      if (activeMarker && activeMarker.trackIndex === index) {
+        const currentTime = wavesurfer.getCurrentTime();
+        startPosition = currentTime >= activeMarker.start && currentTime < activeMarker.end ? 
+          currentTime : activeMarker.start;
+      } else {
+        startPosition = Math.max(...[
+          wavesurfer.getCurrentTime(), 
+          trackStates[index].position,
+          loadPosition(index)
+        ].filter(pos => pos > 0)) || 0;
+      }
       
       wavesurfer.setTime(startPosition);
       trackStates[index].position = startPosition;
@@ -302,6 +311,9 @@
         const relativeX = (e.clientX - rect.left) / rect.width;
         const time = marker.start + (marker.end - marker.start) * relativeX;
         
+        // Don't set active marker when clicking on marker region
+        activeMarker = null;
+        
         setTrackTime(wavesurfer, time, index);
       }
     });
@@ -312,6 +324,13 @@
       const originalBg = markerEl.style.background;
       markerEl.style.background = 'rgba(255, 255, 0, 0.3)';
       setTimeout(() => markerEl.style.background = originalBg, 500);
+      
+      // Only set active marker when clicking on label
+      activeMarker = {
+        trackIndex: index,
+        start: marker.start,
+        end: marker.end
+      };
       
       setTrackTime(wavesurfer, marker.start, index);
     });
@@ -494,6 +513,22 @@
         trackStates[index].position = newPosition;
         trackStates = [...trackStates];
         
+        // Check if we need to stop at marker end and rewind
+        if (activeMarker && activeMarker.trackIndex === index && newPosition >= activeMarker.end) {
+          wavesurfer.pause();
+          trackStates[index].isPlaying = false;
+          activeTrackIndex = -1;
+          // Rewind to marker start
+          
+          wavesurfer.setTime(activeMarker!.start);
+          trackStates[index].position = activeMarker!.start;
+          savePosition(activeMarker!.start, index);
+          syncTracks(activeMarker!.start, index, false);
+        
+          trackStates = [...trackStates];
+          return;
+        }
+
         if (Math.floor(newPosition) > Math.floor(trackStates[index].position)) {
           savePosition(newPosition, index);
         }
@@ -512,6 +547,9 @@
         const newTime = relativeX * wavesurfer.getDuration();
         trackStates[index].position = newTime;
         savePosition(newTime, index);
+        
+        // Clear active marker when seeking
+        activeMarker = null;
         
         wavesurfer.setTime(newTime);
         syncTracks(newTime, index, false);

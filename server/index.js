@@ -83,7 +83,7 @@ async function scanAudioFolder() {
     composition.tracks[trackNumber - 1] = {
       title: 'Audio',
       type: 'audio',
-      url: `/audio/${file}`,  // Use relative URL
+      url: `http://localhost:${port}/audio/${file}`,  // Use absolute URL with localhost
       markers: markerData.markers || []
     };
     

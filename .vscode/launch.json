@@ -16,9 +16,6 @@
       "program": "${workspaceFolder}/server/index.js",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "env": {
-        "PORT": "3000"
-      }
     },
     {
       "name": "Build Client",

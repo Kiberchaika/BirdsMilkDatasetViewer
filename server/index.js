@@ -4,7 +4,7 @@ const cors = require('cors');
 const fs = require('fs').promises;
 
 const app = express();
-const port = 3000;
+const port = 7779;
 const host = '0.0.0.0'; // Listen on all network interfaces
 
 app.use(cors());

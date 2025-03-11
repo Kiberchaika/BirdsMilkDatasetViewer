@@ -3,6 +3,8 @@
   import AudioPlayer from './lib/AudioPlayer.svelte';
   import type { Composition } from './lib/types';
 
+  const apiPort = '7779';
+
   interface Track {
     url: string;
     markers: {
@@ -23,7 +25,6 @@
 
   async function fetchCompositions(page: number = 1) {
     try {
-      const apiPort = '3000';
       const apiHost = window.location.hostname === 'localhost' 
         ? `localhost:${apiPort}` 
         : `${window.location.hostname}:${apiPort}`;
@@ -72,7 +73,7 @@
     } catch (error) {
       console.error('[App] Error fetching compositions:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        console.error('[App] Could not connect to the API server. Please ensure the backend server is running on port 3000');
+        console.error(`[App] Could not connect to the API server. Please ensure the backend server is running on ${apiPort}`);
       }
       compositions = [];
       pagination = {

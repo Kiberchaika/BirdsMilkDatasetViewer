@@ -23,17 +23,65 @@
 
   async function fetchCompositions(page: number = 1) {
     try {
-      const apiHost = window.location.hostname === 'localhost' ? 'localhost:3000' : window.location.host;
-      const response = await fetch(`http://${apiHost}/api/compositions?page=${page}&limit=4`);
+      const apiPort = '3000';
+      const apiHost = window.location.hostname === 'localhost' 
+        ? `localhost:${apiPort}` 
+        : `${window.location.hostname}:${apiPort}`;
+      
+      const apiUrl = `http://${apiHost}/api/compositions?page=${page}&limit=4`;
+      console.log('[App] Fetching compositions from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get("content-type");
+      console.log('[App] Content-Type:', contentType);
+      
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error('[App] Non-JSON response received:', text);
+        throw new TypeError(`Expected JSON response but got ${contentType || 'unknown content type'}`);
+      }
+      
       const data = await response.json();
+      
+      data.compositions = data.compositions.map((comp: Composition) => ({
+        ...comp,
+        tracks: comp.tracks.map((track: Track) => ({
+          ...track,
+          url: track.url.replace(/http:\/\/[^\/]+/, `http://${apiHost}`)
+        }))
+      }));
+      
       compositions = data.compositions;
       pagination = data.pagination;
       console.log('[App] Loaded compositions:', compositions.length);
       compositions.forEach((comp, i) => {
         console.log(`[App] Composition ${i}: ${comp.title} with ${comp.tracks.length} tracks`);
+        comp.tracks.forEach((track, j) => {
+          console.log(`[App] Track ${j} URL: ${track.url}`);
+        });
       });
     } catch (error) {
-      console.error('Error fetching compositions:', error);
+      console.error('[App] Error fetching compositions:', error);
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('[App] Could not connect to the API server. Please ensure the backend server is running on port 3000');
+      }
+      compositions = [];
+      pagination = {
+        total: 0,
+        currentPage: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false
+      };
     }
   }
 

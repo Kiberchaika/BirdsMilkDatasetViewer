@@ -11,6 +11,14 @@ app.use(cors());
 app.use(express.json());
 app.use('/audio', express.static(path.join(__dirname, 'audio')));
 
+// Add default route for root path
+app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`
+     Server is running
+  `);
+});
+
 async function readJsonFile(filePath) {
   try {
     const data = await fs.readFile(filePath, 'utf8');
@@ -166,7 +174,8 @@ app.post('/api/rescan', async (req, res) => {
 
 app.listen(port, host, () => {
   console.log(`Server running at http://${host}:${port}`);
-  console.log('You can access the server from:');
-  console.log(`  - Local: http://localhost:${port}`);
-  console.log(`  - Network: http://YOUR_IP_ADDRESS:${port}`);
+  console.log('Available endpoints:');
+  console.log(`  - Home page: http://${host}:${port}/`);
+  console.log(`  - API: http://${host}:${port}/api/compositions`);
+  console.log(`  - Audio files: http://${host}:${port}/audio`);
 }); 

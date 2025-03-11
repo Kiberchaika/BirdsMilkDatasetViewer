@@ -112,10 +112,21 @@
         ].filter(pos => pos > 0)) || 0;
       }
       
+      // First sync all tracks to the start position
+      wavesurfers.forEach((ws, i) => {
+        if (ws && i !== index) {
+          ws.setTime(startPosition);
+          trackStates[i].position = startPosition;
+          savePosition(startPosition, i);
+        }
+      });
+      
+      // Then start playback on the selected track
       wavesurfer.setTime(startPosition);
       trackStates[index].position = startPosition;
-      wavesurfer.play();
       
+      // Small delay before playing to ensure all tracks are synced
+      wavesurfer.play();
       trackStates[index].isPlaying = true;
       activeTrackIndex = index;
     }
@@ -187,10 +198,8 @@
       if (ws) {
         const currentTime = ws.getCurrentTime();
         ws.zoom(zoomLevel);
-        setTimeout(() => {
-          ws.setTime(currentTime);
-          redrawMarkers(ws, index);
-        }, 100);
+        ws.setTime(currentTime);
+        redrawMarkers(ws, index);
       }
     });
   }
@@ -531,6 +540,11 @@
           return;
         }
 
+        // Sync other tracks during playback
+        if (trackStates[index].isPlaying) {
+          syncTracks(newPosition, index, false);
+        }
+
         if (Math.floor(newPosition) > Math.floor(trackStates[index].position)) {
           savePosition(newPosition, index);
         }
@@ -540,6 +554,8 @@
         syncScroll(index, scrollLeft, true);
       }
     };
+
+    
 
     const handleClick = (relativeX: number) => {
       if (locks.seeking) return;

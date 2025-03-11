@@ -23,7 +23,8 @@
 
   async function fetchCompositions(page: number = 1) {
     try {
-      const response = await fetch(`http://localhost:3000/api/compositions?page=${page}&limit=4`);
+      const apiHost = window.location.hostname === 'localhost' ? 'localhost:3000' : window.location.host;
+      const response = await fetch(`http://${apiHost}/api/compositions?page=${page}&limit=4`);
       const data = await response.json();
       compositions = data.compositions;
       pagination = data.pagination;

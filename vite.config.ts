@@ -5,6 +5,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 export default defineConfig({
   plugins: [svelte()],
   server: {
-    port: 7778
+    port: 7778,
+    host: true  // This allows access from any IP address
   }
 })

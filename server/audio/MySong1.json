@@ -1,0 +1,4 @@
+[
+  { "start": 0, "end": 10, "label": "Intro" },
+  { "start": 10, "end": 40, "label": "Verse" }
+]

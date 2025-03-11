@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start Dev Server + Client + Browser",
+      "request": "launch",
+      "type": "msedge",
+      "url": "http://localhost:7778",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Start Dev Environment"
+    },
+    {
+      "name": "Start Dev Server",
+      "request": "launch",
+      "type": "node",
+      "program": "${workspaceFolder}/server/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "PORT": "3000"
+      }
+    },
+    {
+      "name": "Build Client",
+      "request": "launch",
+      "type": "node",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "build"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Start Dev Client",
+      "request": "launch",
+      "type": "node",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Start Dev Client + Browser",
+      "request": "launch",
+      "type": "msedge",
+      "url": "http://localhost:7778",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Start Client"
+    }
+  ]
+} 

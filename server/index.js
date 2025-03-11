@@ -120,6 +120,7 @@ let compositions = [];
 scanAudioFolder().then(result => {
   compositions = result;
   console.log(`\nLoaded ${compositions.length} compositions successfully`);
+  console.log('Server is ready');
 }).catch(error => {
   console.error('Error scanning audio folder:', error);
 });

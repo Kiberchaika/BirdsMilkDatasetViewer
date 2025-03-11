@@ -21,13 +21,14 @@
         "panel": "new"
       },
       "problemMatcher": {
+        "owner": "custom",
         "pattern": {
           "regexp": "^.*$"
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": "Server running at http://localhost:3000"
+          "beginsPattern": "^.*$",
+          "endsPattern": "^Server is ready$"
         }
       }
     },
@@ -41,13 +42,14 @@
         "panel": "new"
       },
       "problemMatcher": {
+        "owner": "custom",
         "pattern": {
           "regexp": "^.*$"
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": "ready in.*"
+          "beginsPattern": "^.*$",
+          "endsPattern": "^.*VITE.*ready in.*$"
         }
       }
     },

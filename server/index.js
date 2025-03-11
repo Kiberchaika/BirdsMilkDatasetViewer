@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 
 const app = express();
 const port = 3000;
+const host = '0.0.0.0'; // Listen on all network interfaces
 
 app.use(cors());
 app.use(express.json());
@@ -78,10 +79,11 @@ async function scanAudioFolder() {
       composition.tracks.push(null);
     }
     
+    // Use relative URL for audio files
     composition.tracks[trackNumber - 1] = {
       title: 'Audio',
       type: 'audio',
-      url: `http://localhost:${port}/audio/${file}`,
+      url: `/audio/${file}`,  // Use relative URL
       markers: markerData.markers || []
     };
     
@@ -161,6 +163,9 @@ app.post('/api/rescan', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`Server running at http://${host}:${port}`);
+  console.log('You can access the server from:');
+  console.log(`  - Local: http://localhost:${port}`);
+  console.log(`  - Network: http://YOUR_IP_ADDRESS:${port}`);
 }); 

@@ -23,6 +23,8 @@
   const defaultZoom = 20;
   
   let zoomLevel = defaultZoom;
+  let markerCounter = 0;
+  let tempMarkerStart: { trackIndex: number, time: number } | null = null;
   
   let markersAdded = tracks.map(() => false);
   let originalMarkerData = tracks.map(track => 
@@ -620,6 +622,36 @@
     trackStates = [...trackStates];
   }
 
+  function addNewMarkerStart(index: number) {
+    const wavesurfer = wavesurfers[index];
+    if (!wavesurfer) return;
+    
+    const time = wavesurfer.getCurrentTime();
+    tempMarkerStart = { trackIndex: index, time };
+  }
+
+  function addNewMarkerEnd(index: number) {
+    const wavesurfer = wavesurfers[index];
+    if (!wavesurfer || !tempMarkerStart || tempMarkerStart.trackIndex !== index) return;
+    
+    const endTime = wavesurfer.getCurrentTime();
+    if (endTime <= tempMarkerStart.time) return;
+    
+    markerCounter++;
+    const newMarker = {
+      start: tempMarkerStart.time,
+      end: endTime,
+      label: `Marker ${markerCounter}`
+    };
+    
+    if (!originalMarkerData[index]) {
+      originalMarkerData[index] = [];
+    }
+    originalMarkerData[index].push(newMarker);
+    redrawMarkers(wavesurfer, index);
+    tempMarkerStart = null;
+  }
+
   onMount(() => {
     tracks.forEach((track, index) => {
       const container = document.getElementById(getContainerId(index));
@@ -675,6 +707,20 @@
                 title="Play/Pause Track"
               >
                 {trackStates[i].isPlaying ? 'Pause' : 'Play'}
+              </button>
+              <button 
+                on:click={() => addNewMarkerStart(i)} 
+                class="track-control-button" 
+                title="Start Marker"
+              >
+                [
+              </button>
+              <button 
+                on:click={() => addNewMarkerEnd(i)} 
+                class="track-control-button" 
+                title="End Marker"
+              >
+                ]
               </button>
             </div>
           </div>

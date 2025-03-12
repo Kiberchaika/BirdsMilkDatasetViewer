@@ -99,36 +99,75 @@
         }
       });
 
-      // If we have an active marker, ensure we start from its start position
-      if (activeMarker && activeMarker.trackIndex === index) {
-        const currentTime = wavesurfer.getCurrentTime();
-        startPosition = currentTime >= activeMarker.start && currentTime < activeMarker.end ? 
-          currentTime : activeMarker.start;
+      // If there is an active marker on another track, use its range
+      if (activeMarker && activeMarker.trackIndex !== index) {
+        startPosition = activeMarker.start;
+        const endPosition = activeMarker.end;
+
+        // Sync all tracks to the start position
+        wavesurfers.forEach((ws, i) => {
+          if (ws && i !== index) {
+            ws.setTime(startPosition);
+            trackStates[i].position = startPosition;
+            savePosition(startPosition, i);
+          }
+        });
+
+        // Start playback on the selected track
+        wavesurfer.setTime(startPosition);
+        trackStates[index].position = startPosition;
+
+        // Play until the end of the marker range
+        wavesurfer.play();
+        trackStates[index].isPlaying = true;
+        activeTrackIndex = index;
+
+        // Stop playback at the end of the marker range
+        const checkEnd = () => {
+          if (wavesurfer.getCurrentTime() >= endPosition) {
+            wavesurfer.pause();
+            trackStates[index].isPlaying = false;
+            activeTrackIndex = -1;
+            
+            // Rewind all tracks to the start of the marker
+            wavesurfers.forEach((ws, i) => {
+              if (ws) {
+                ws.setTime(startPosition);
+                trackStates[i].position = startPosition;
+                savePosition(startPosition, i);
+              }
+            });
+            
+            wavesurfer.un('audioprocess', checkEnd);
+          }
+        };
+        wavesurfer.on('audioprocess', checkEnd);
       } else {
+        // Default behavior if no active marker on another track
         startPosition = Math.max(...[
           wavesurfer.getCurrentTime(), 
           trackStates[index].position,
           loadPosition(index)
         ].filter(pos => pos > 0)) || 0;
+
+        // Sync all tracks to the start position
+        wavesurfers.forEach((ws, i) => {
+          if (ws && i !== index) {
+            ws.setTime(startPosition);
+            trackStates[i].position = startPosition;
+            savePosition(startPosition, i);
+          }
+        });
+
+        // Start playback on the selected track
+        wavesurfer.setTime(startPosition);
+        trackStates[index].position = startPosition;
+
+        // Small delay before playing to ensure all tracks are synced
+        wavesurfer.play();
+        trackStates[index].isPlaying = true;
+        activeTrackIndex = index;
       }
-      
-      // First sync all tracks to the start position
-      wavesurfers.forEach((ws, i) => {
-        if (ws && i !== index) {
-          ws.setTime(startPosition);
-          trackStates[i].position = startPosition;
-          savePosition(startPosition, i);
-        }
-      });
-      
-      // Then start playback on the selected track
-      wavesurfer.setTime(startPosition);
-      trackStates[index].position = startPosition;
-      
-      // Small delay before playing to ensure all tracks are synced
-      wavesurfer.play();
-      trackStates[index].isPlaying = true;
-      activeTrackIndex = index;
     }
     
     trackStates = [...trackStates];

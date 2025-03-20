@@ -12,6 +12,12 @@
       end: number;
       label: string;
     }[];
+    segments: {
+      label: string;
+      phi4_text: string;
+      whisper3_text: string;
+      nemo_text: string;
+    }[];
   }
 
   let compositions: Composition[] = [];

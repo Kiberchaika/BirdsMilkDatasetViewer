@@ -30,6 +30,9 @@
   let originalMarkerData = tracks.map(track => 
     track.markers ? [...track.markers.map(m => ({...m}))] : []
   );
+  let originalSegmentData = tracks.map(track => 
+    track.segments ? [...track.segments.map(s => ({...s}))] : []
+  );
   let trackDurations = tracks.map(track => track.duration || 0);
   
   const markerColors = [
@@ -707,6 +710,39 @@
     tempMarkerStart = null;
   }
 
+  function findMarkerByLabel(index: number, label: string) {
+    return originalMarkerData[index]?.find(marker => marker.label === label);
+  }
+
+  function playSegment(index: number, label: string) {
+    const marker = findMarkerByLabel(index, label);
+    if (!marker) return;
+
+    const wavesurfer = wavesurfers[index];
+    if (!wavesurfer) return;
+
+    // Set as active marker
+    activeMarker = {
+      trackIndex: index,
+      start: marker.start,
+      end: marker.end
+    };
+
+    // Set time to marker start
+    wavesurfer.setTime(marker.start);
+    trackStates[index].position = marker.start;
+    savePosition(marker.start, index);
+    
+    // Sync other tracks
+    syncTracks(marker.start, index, false);
+    
+    // Start playback
+    wavesurfer.play();
+    trackStates[index].isPlaying = true;
+    activeTrackIndex = index;
+    trackStates = [...trackStates];
+  }
+
   onMount(() => {
     tracks.forEach((track, index) => {
       const container = document.getElementById(getContainerId(index));
@@ -784,6 +820,39 @@
         <div class="waveform-container">
           <div id="{getContainerId(i)}" class="waveform"></div>
         </div>
+        
+        {#if originalSegmentData[i]?.length > 0}
+          <div class="segments-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Label</th>
+                  <th>Phi4</th>
+                  <th>Whisper3</th>
+                  <th>Nemo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each originalSegmentData[i] as segment}
+                  <tr>
+                    <td>
+                      <span 
+                        class="segment-label" 
+                        class:active={activeMarker && findMarkerByLabel(i, segment.label)?.start === activeMarker.start}
+                        on:click={() => playSegment(i, segment.label)}
+                      >
+                        {segment.label}
+                      </span>
+                    </td>
+                    <td>{@html segment.phi4_text}</td>
+                    <td>{@html segment.whisper3_text}</td>
+                    <td>{@html segment.nemo_text}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
       </div>
     {/each}
   </div>
@@ -953,5 +1022,73 @@
     top: 5px;
     left: 5px;
     font-family: monospace;
+  }
+
+  .segments-table {
+    margin-top: 20px;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .segments-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .segments-table th:first-child,
+  .segments-table td:first-child {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+  }
+  
+  .segments-table th:not(:first-child),
+  .segments-table td:not(:first-child) {
+    width: 33.3%;
+  }
+  
+  .segments-table th,
+  .segments-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    word-break: break-word;
+  }
+  
+  .segments-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .segments-table td {
+    color: #666;
+  }
+  
+  .segments-table tr:hover {
+    background: #f9f9f9;
+  }
+  
+  .segments-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .segment-label {
+    cursor: pointer;
+    color: #4a9eff;
+    transition: color 0.2s ease;
+  }
+
+  .segment-label:hover {
+    color: #2980b9;
+    text-decoration: underline;
+  }
+
+  .segment-label.active {
+    font-weight: bold;
+    color: #2980b9;
   }
 </style>  

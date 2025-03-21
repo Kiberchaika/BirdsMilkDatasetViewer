@@ -387,6 +387,15 @@
       
       setTrackTime(wavesurfer, marker.start, index);
     });
+    
+    // Add touch event handling for markers
+    markerEl.addEventListener('touchstart', (e: TouchEvent) => {
+      e.stopPropagation();
+    }, { passive: true });
+    
+    labelEl.addEventListener('touchstart', (e: TouchEvent) => {
+      e.stopPropagation();
+    }, { passive: true });
   }
 
   function setTrackTime(wavesurfer: WaveSurfer, time: number, index: number) {
@@ -478,7 +487,8 @@
       fillParent: false,
       interact: true,
       autoScroll: true,
-      dragToSeek: true
+      dragToSeek: true,
+      hideScrollbar: false,
     });
 
     // Throttle scroll events
@@ -535,7 +545,6 @@
          
         updateMarkersForScroll(container, scrollLeft);
         syncScroll(index, scrollLeft);
-        
       }
     });
     
@@ -548,12 +557,49 @@
           wavesurfer.setScroll(scrollLeft);
           updateMarkersForScroll(container, scrollLeft);
           syncScroll(index, scrollLeft);
-        
         }
       };
       
       scrollableParent.addEventListener('scroll', scrollHandler, { passive: true });
       scrollListeners.push({ element: scrollableParent, handler: scrollHandler });
+    }
+    
+    // Add touch event handling for waveform container
+    let touchStartX = 0;
+    let scrollStartX = 0;
+    let isTouchDragging = false;
+    
+    const waveformContainer = container.closest('.waveform-container') as HTMLElement;
+    if (waveformContainer) {
+      waveformContainer.addEventListener('touchstart', (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          scrollStartX = waveformContainer.scrollLeft;
+          isTouchDragging = false;
+        }
+      }, { passive: true });
+      
+      waveformContainer.addEventListener('touchmove', (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          isTouchDragging = true;
+          const touchCurrentX = e.touches[0].clientX;
+          const diff = touchStartX - touchCurrentX;
+          
+          if (Math.abs(diff) > 5) {
+            if (scrollableParent) {
+              const newScrollLeft = scrollStartX + diff;
+              scrollableParent.scrollLeft = newScrollLeft;
+            }
+          }
+        }
+      }, { passive: true });
+      
+      waveformContainer.addEventListener('touchend', (e: TouchEvent) => {
+        if (isTouchDragging) {
+          e.preventDefault();
+        }
+        isTouchDragging = false;
+      }, { passive: false });
     }
   }
   

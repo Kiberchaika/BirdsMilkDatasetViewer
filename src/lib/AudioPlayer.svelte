@@ -840,6 +840,10 @@
                         class="segment-label" 
                         class:active={activeMarker && findMarkerByLabel(i, segment.label)?.start === activeMarker.start}
                         on:click={() => playSegment(i, segment.label)}
+                        on:keydown={(e) => e.key === 'Enter' && playSegment(i, segment.label)}
+                        tabindex="0"
+                        role="button"
+                        aria-label={`Play segment: ${segment.label}`}
                       >
                         {segment.label}
                       </span>

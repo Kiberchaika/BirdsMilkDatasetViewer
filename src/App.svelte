@@ -153,12 +153,6 @@
     padding: 20px;
   }
 
-  h1 {
-    color: #333;
-    text-align: left;
-    margin-bottom: 40px;
-  }
-
   p {
     text-align: left;
     color: #666;
